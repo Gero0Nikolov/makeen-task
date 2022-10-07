@@ -129,6 +129,8 @@ class MAEX_MakeenModule extends ET_Builder_Module {
             'fields' => $fields_key_value,
         ]);
 
+		add_action( 'get_footer', [ $this, 'load_maex_main_style' ] );
+
 		$formidable_forms_plugin_path = 'formidable/formidable.php';
 		$is_formidable_forms_plugin_active = is_plugin_active( $formidable_forms_plugin_path );
 
@@ -236,6 +238,10 @@ class MAEX_MakeenModule extends ET_Builder_Module {
 		}
 
 		return $options;
+	}
+
+	public function load_maex_main_style() {
+		wp_enqueue_style( 'maex-main-style', get_stylesheet_directory_uri() .'/makeen-extension/includes/modules/MakeenModule/style.css', [], MAEX_RESOURCE_VERSION, 'all');
 	}
 }
 
