@@ -1,5 +1,6 @@
 // External Dependencies
 import React, { Component } from 'react';
+import Validator from '../../helpers/Validator';
 
 // Internal Dependencies
 import './style.css';
@@ -14,7 +15,28 @@ class Url extends Component {
    * @param {object} event
    */
   _onChange = (event) => {
-    this.props._onChange(this.props.name, event.target.value);
+    const validators = {
+      isValidUrl: {
+        validator: (value) => {
+
+          if (value.trim().length === 0) { return true; }
+
+          let url;
+  
+          try {
+            url = new URL(value);
+          } catch (_) {
+            return false;  
+          }
+
+          return url.protocol === "http:" || url.protocol === "https:";
+        },
+        default: event.target.value,
+      },
+    };
+
+    const value = Validator.validateData(validators, event.target.value);
+    this.props._onChange(this.props.name, value);
   }
 
   render() {

@@ -87,14 +87,63 @@ class MAEX_MakeenModule extends ET_Builder_Module {
 					'label' => 'Is Live',
 				],
 			],
+			'formidable_forms' => [
+				'type' => 'select',
+				'label' => 'Formidable Forms',
+				'option_category' => 'basic_option',
+				'description' => 'Formidable Forms value will be rendered as Shortcode.',
+				'toggle_slug' => 'admin_label',
+				'options' => $this->get_formidable_forms(),
+			],
 		];
 
-
-		return $this->prepare_fields($fields);
+		return $this->prepare_fields( $fields );
 	}
 
 	public function render( $attrs, $content = null, $render_slug ) {
-		// return
+
+		$fields_map = [
+			'starting_point',
+			'trim_start',
+			'trim_end',
+			'start_img',
+			'end_img',
+			'src',
+			'has_cc',
+			'is_live',
+			'formidable_forms',
+		];
+
+		$fields_key_value = [];
+		foreach ( $fields_map as $index => $field_name ) {
+
+			$fields_key_value[ $field_name ] = (
+				isset( $this->props[ $field_name ] ) ?
+				$this->props[ $field_name ] :
+				null
+			);
+		}
+
+		wp_enqueue_script( 'maex-main-script', get_stylesheet_directory_uri() .'/main.js', [ 'jquery' ], MAEX_RESOURCE_VERSION, true );
+        wp_localize_script( 'maex-main-script', 'maexMainConfigObject', [
+            'fields' => $fields_key_value,
+        ]);
+
+		$formidable_forms_plugin_path = 'formidable/formidable.php';
+		$is_formidable_forms_plugin_active = is_plugin_active( $formidable_forms_plugin_path );
+
+		if ( 
+			!$is_formidable_forms_plugin_active ||
+			$this->props[ 'formidable_forms' ] === '0'
+		) { return '<div class="maex_makeen_module"></div>'; }
+
+		$formidable_shortcode = '[formidable id='. $this->props[ 'formidable_forms' ] .' title=true description=true]';
+
+		return (
+			'<div class="maex_makeen_module">'.
+			do_shortcode( $formidable_shortcode ) .
+			'</div>'
+		);
 	}
 
 	public function prepare_fields( $fields ) {
@@ -143,6 +192,50 @@ class MAEX_MakeenModule extends ET_Builder_Module {
 		}
 
 		return $prepared;
+	}
+
+	public function get_formidable_forms() {
+		$options = [
+			'0' => 'None',
+		];
+
+		$formidable_forms_plugin_path = 'formidable/formidable.php';
+		$is_formidable_forms_plugin_active = is_plugin_active( $formidable_forms_plugin_path );
+
+		if ( !$is_formidable_forms_plugin_active ) { return $options; }
+
+		global $wpdb;
+
+		$formidable_forms_table = (
+			$wpdb->prefix .
+			'frm_forms'
+		);
+
+		$formidable_forms_query = str_replace(
+			[
+				'\'',
+			],
+			[
+				'',
+			],
+			$wpdb->prepare(
+				'SELECT id, name FROM %s WHERE status="published" ORDER BY created_at DESC',
+				[
+					$formidable_forms_table
+				]
+			)
+		);
+
+		$formidable_forms = $wpdb->get_results( $formidable_forms_query, ARRAY_A );
+		
+		if ( empty( $formidable_forms ) ) { return $options; }
+
+		foreach ( $formidable_forms as $form_index => $form_object ) {
+
+			$options[ $form_object[ 'id' ] ] = $form_object[ 'name' ];
+		}
+
+		return $options;
 	}
 }
 
