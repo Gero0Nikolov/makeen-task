@@ -88,6 +88,9 @@ class MakeenTaskPlugin {
         // Add Admin Resources
         add_action( 'admin_enqueue_scripts', [$this, 'mtp_add_admin_resources'] );
 
+        // Init Session
+        add_action( 'init', [$this, 'mtp_start_session'] );
+
         // Init Post Type
         add_action( 'init', [$this, 'mtp_init_post_type'] );
     }
@@ -197,6 +200,44 @@ class MakeenTaskPlugin {
             [], 
             $this->config['resource_version'], 
             'all'
+        );
+    }
+
+    function mtp_start_session() {
+
+        self::start_session();
+    }
+
+    public static function start_session() {
+        
+        if ( !session_id() ) {
+
+            session_start();
+        }
+    }
+
+    public static function manipulate_session( $key, $value, $delete = false ) {
+        
+        if ( $delete ) {
+
+            if ( isset( $_SESSION[ $key ] ) ) {
+             
+                unset( $_SESSION[ $key ] );
+            }
+            
+            return true;
+        }
+
+        $_SESSION[ $key ] = $value;
+        return true;
+    }
+
+    public static function get_session( $key ) {
+
+        return (
+            isset( $_SESSION[ $key ] ) ?
+            $_SESSION[ $key ] :
+            null
         );
     }
 

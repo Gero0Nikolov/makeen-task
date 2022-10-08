@@ -9,6 +9,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
     private $boxes_base_config;
     private $boxes_count;
     private $boxes;
+    private $box_validation_message;
 
     function __construct(
         $modules_base_config
@@ -44,6 +45,9 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
             'autoload' => [
                 'button-label',
             ],
+            'query_var' => [
+                'key' => 'mtp_error_flasher',
+            ],
         ];
 
         // Init Boxes Base Config
@@ -54,6 +58,9 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
 
         // Init Boxes Container
         $this->boxes = [];
+
+        // Init Box Validation Message
+        $this->box_validation_message = [];
 
         // Init Boxes Autoload
         $autoload_state = $this->autoload_boxes();
@@ -67,6 +74,9 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
 
         // Set Save Post Hook
         add_action( 'save_post', [$this, 'mtp_save_meta'] );
+
+        // Admin Notices
+        add_action( 'admin_notices', [$this, 'mtp_flash_notices'] );
     }
 
     private function autoload_boxes() {
@@ -157,19 +167,95 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
 
         $result = false;
         
+        $data = $_POST;
+
         $post_type = (
-            !empty( $_POST['post_type'] ) ?
-            $_POST['post_type'] :
+            !empty( $data['post_type'] ) ?
+            $data['post_type'] :
             null
         );
 
         if (
             empty( $post_type ) ||
-            $post_type !== $this->base_config['post_type']['id']
+            $post_type !== $this->base_config['post_type']['id'] ||
+            empty( $this->boxes )
         ) { return $result; }
 
+        $errors = [];
 
-        $this->dd($_POST);
+        foreach ( $this->boxes as $box_dir => $box_controller ) {
+
+            if (
+                empty( $box_dir ) ||
+                empty( $box_controller) ||
+                !method_exists( $box_controller, 'validate' ) ||
+                !method_exists( $box_controller, 'save' )
+            ) { continue; }
+
+            $data = $box_controller->validate( $data );
+            
+            $errors = array_merge(
+                $box_controller->save( $data ),
+                $errors
+            );
+        }
+
+        if ( !empty( $errors ) ) {
+
+            $this->set_admin_errors_flash( $errors );
+        }
+
+        return true;
+    }
+
+    function mtp_flash_notices() {
+
+        $errors = self::get_session( $this->config['query_var']['key'] );
+        
+        if ( !empty( $errors ) ) {
+
+            $session_set_state = self::manipulate_session(
+                $this->config['query_var']['key'],
+                [],
+                true
+            );
+
+            $single_error_html = '
+            <div class="error">
+                <p>[MESSAGE]</p>
+            </div>
+            ';
+
+            $html = '';
+
+            foreach ( $errors as $error_index => $error_config ) {
+
+                if ( empty( $error_config ) ) { continue; }
+
+                $error_html = $single_error_html;
+                foreach ( $error_config as $key => $value ) {
+
+                    $tag = strtoupper( '['. $key .']' );
+                    $error_html = str_replace(
+                        $tag,
+                        $value,
+                        $error_html
+                    );
+                }
+                
+                $html .= $error_html;
+            }
+            
+            self::mtp_return_markup( $html );
+        }
+    }
+
+    protected function set_admin_errors_flash( $errors ) {
+
+        $session_set_state = self::manipulate_session(
+            $this->config['query_var']['key'],
+            $errors
+        );
     }
 
     protected function fetch_markup( $post, $params_meta_name_map, $render_config ) {
@@ -246,6 +332,112 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
         }
 
         return $map;
+    }
+
+    protected function filter_data( $data, $validator, $params_meta_name_map ) {
+
+        $filtered_data = $data;
+
+        if (
+            empty( $validator ) ||
+            empty( $params_meta_name_map )
+        ) { return $filtered_data; }
+
+        foreach ( $params_meta_name_map as $param_name => $param_meta_name ) {
+
+            $data_value = (
+                isset( $data[ $param_meta_name ] ) ?
+                $data[ $param_meta_name ] :
+                null
+            );
+
+            if ( $data_value === null ) { continue; }
+            
+            $data_validator = (
+                isset( $validator[ $param_name ] ) &&
+                isset( $validator[ $param_name ]['validator'] ) ?
+                $validator[ $param_name ]['validator'] :
+                null
+            );
+
+            $data_filter = (
+                isset( $validator[ $param_name ] ) &&
+                isset( $validator[ $param_name ]['filter'] ) ?
+                $validator[ $param_name ]['filter'] :
+                null
+            );
+
+            $data_value = (
+                $data_filter !== null ?
+                $data_filter( $data_value ) :
+                $data_value
+            );
+
+            if ( 
+                $data_validator !== null &&
+                !$data_validator( $data_value ) 
+            ) {
+
+                $validation_message = (
+                    !empty( $validator[ $param_name ]['message'] ) ?
+                    $validator[ $param_name ]['message'] :
+                    null
+                );
+
+                if ( $validation_message !== null ) {
+
+                    $filtered_data[ $param_meta_name ] = [
+                        'error' => true,
+                        'message' => $validation_message,
+                    ];
+                } else {
+
+                    unset( $filtered_data[ $param_meta_name ] );
+                }
+            } else {
+
+                $filtered_data[ $param_meta_name ] = $data_value;
+            }
+        }
+    
+        return $filtered_data;
+    }
+
+    protected function update_data( $data ) {
+
+        $errors = [];
+
+        if ( empty( $data ) ) { return $errors; }
+
+        $post_id = (
+            !empty( $data['post_ID'] ) ?
+            intval( $data['post_ID'] ) :
+            null
+        );
+
+        if ( empty( $post_id ) ) { return $errors; }
+
+        foreach ( $data as $param_meta_name => $param_value ) {
+
+            if ( empty( $param_meta_name ) ) { continue; }
+
+            if ( !empty( $param_value['error'] ) ) {
+
+                $errors[] = [
+                    'meta_name' => $param_meta_name,
+                    'message' => $param_value['message']
+                ];
+                continue;
+            }
+
+            $update_state = update_post_meta(
+                $post_id,
+                $param_meta_name,
+                $param_value
+            );
+        }
+
+        return $errors;
     }
 
     public static function mtp_return_markup( $html = '' ) {
