@@ -17,6 +17,9 @@ class MakeenTaskPlugin {
     private $modules_base_config;
     private $modules;
 
+    public static $styles_config;
+    public static $scripts_config;
+
     function __construct() {
 
         // Set Default Config
@@ -55,10 +58,11 @@ class MakeenTaskPlugin {
                         'assets/dist'
                     ),
                 ],
+                'shortcode' => 'wm-custom-shortcode',
             ],
             'autoload' => [
                 'metabox' => 'metabox',
-                //'shortcode' => 'ShortcodeController',
+                'shortcode' => 'shortcode',
             ],
         ];
 
@@ -77,8 +81,35 @@ class MakeenTaskPlugin {
         // Init Default Modules Container
         $this->modules = [];
 
+        // Init Styles Config
+        self::$styles_config = [
+            'path' => (
+                $this->config['base']['assets']['path'] 
+                .'/style'
+            ),
+            'url' => (
+                $this->config['base']['assets']['url'] 
+                .'/style'
+            ),
+        ];
+
+        // Init Scripts Config
+        self::$scripts_config = [
+            'path' => (
+                $this->config['base']['assets']['path'] 
+                .'/script'
+            ),
+            'url' => (
+                $this->config['base']['assets']['url'] 
+                .'/script'
+            )
+        ];
+
         // Init Modules Autoload
         add_action( 'init', [$this, 'mtp_autoload_modules']);
+
+        // Add Public Resources
+        add_action( 'wp_enqueue_scripts', [$this, 'mtp_add_public_resources'] );
 
         // Add Admin Resources
         add_action( 'admin_enqueue_scripts', [$this, 'mtp_add_admin_resources'] );
@@ -183,29 +214,29 @@ class MakeenTaskPlugin {
         );
     }
 
+    function mtp_add_public_resources() {
+
+        $styles = self::$styles_config;
+
+        $scripts = self::$scripts_config;
+
+        wp_enqueue_script(
+            'mtp-public-core-script', 
+            (
+                $scripts['url'] .
+                '/public.js'
+            ), 
+            ['jquery'], 
+            $this->config['resource_version'],
+            true
+        );
+    }
+
     function mtp_add_admin_resources() {
 
-        $styles = [
-            'path' => (
-                $this->config['base']['assets']['path'] 
-                .'/style'
-            ),
-            'url' => (
-                $this->config['base']['assets']['url'] 
-                .'/style'
-            )
-        ];
+        $styles = self::$styles_config;
 
-        $scripts = [
-            'path' => (
-                $this->config['base']['assets']['path'] 
-                .'/script'
-            ),
-            'url' => (
-                $this->config['base']['assets']['url'] 
-                .'/script'
-            )
-        ];
+        $scripts = self::$scripts_config;
 
         wp_enqueue_style(
             'mtp-admin-global-style', 
@@ -233,6 +264,20 @@ class MakeenTaskPlugin {
     function mtp_start_session() {
 
         self::start_session();
+    }
+
+    public function get_module( $namespace, $module ) {
+
+        global $MakeenTaskPlugin;
+        
+        return (
+            !empty( $MakeenTaskPlugin ) &&
+            !empty( $MakeenTaskPlugin->modules ) &&
+            !empty( $MakeenTaskPlugin->modules[ $namespace ] ) &&
+            !empty( $MakeenTaskPlugin->modules[ $namespace ][ $module ] ) ?
+            $MakeenTaskPlugin->modules[ $namespace ][ $module ] :
+            null
+        );
     }
 
     public static function start_session() {

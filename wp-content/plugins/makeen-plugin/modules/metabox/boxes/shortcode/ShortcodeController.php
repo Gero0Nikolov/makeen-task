@@ -6,9 +6,9 @@ class ShortcodeController extends MetaboxController {
 
     private $base_config;
     private $config;
-    private $render_config;
+    protected $render_config;
     private $validator_config;
-    private $params_meta_name_map;
+    protected $params_meta_name_map;
 
     function __construct(
         $boxes_base_config
@@ -19,7 +19,7 @@ class ShortcodeController extends MetaboxController {
 
         // Init Config
         $this->config = [
-            'shortcode' => '[wm-custom-shortcode id="[POST_ID]"]',
+            'shortcode' => '['. $this->base_config['shortcode'] .' id="[POST_ID]"]',
             'base' => [
                 'path' => dirname( __FILE__ ),
                 'url' => plugin_dir_url( __FILE__ ),

@@ -41,6 +41,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                     'prefix' => 'makeen_task_metabox_',
                     'render' => 'Render.php',
                 ],
+                'shortcode' => $this->base_config['base']['shortcode'],
             ],
             'autoload' => [
                 'shortcode',
@@ -477,6 +478,72 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
         }
 
         return $errors;
+    }
+
+    public function fetch_meta_data_by_keys( $post_id, $keys ) {
+
+        $data = [];
+
+        foreach ( $keys as $index => $key ) {
+
+            if ( 
+                empty( $key ) ||
+                isset( $data[ $key ] )
+            ) { continue; }
+
+            $key_searchable = str_replace(
+                [
+                    '_',
+                ],
+                [
+                    '-',
+                ],
+                $key
+            );
+
+            if ( empty( $this->boxes[ $key_searchable ] ) ) { continue; }
+
+            $box_controller = $this->boxes[ $key_searchable ];
+            $box_meta_fields = array_values( $box_controller->params_meta_name_map );
+            $box_meta_keys = array_keys( $box_controller->params_meta_name_map );
+
+            if ( 
+                empty( $box_meta_fields ) ||
+                empty( $box_meta_keys )
+            ) { continue; }
+
+            foreach ( $box_meta_fields as $index => $meta_key ) {
+
+                $meta_value = get_post_meta(
+                    $post_id,
+                    $meta_key,
+                    true
+                );
+
+                if ( empty( $meta_value ) ) {
+
+                    $meta_value = $box_controller->get_default_value_by_param(
+                        $box_meta_keys[ $index ]
+                    );
+                }
+                
+                $data[ $key ] = $meta_value;
+                break;
+            }
+        }
+
+        return $data;
+    }
+
+    protected function get_default_value_by_param( $param_name ) {
+
+        return (
+            isset( $this->render_config ) &&
+            isset( $this->render_config['meta_box']['params'][ $param_name ] ) && 
+            isset( $this->render_config['meta_box']['params'][ $param_name ]['value'] ) ?
+            $this->render_config['meta_box']['params'][ $param_name ]['value'] :
+            null
+        );
     }
 
     public static function mtp_return_markup( $html = '' ) {

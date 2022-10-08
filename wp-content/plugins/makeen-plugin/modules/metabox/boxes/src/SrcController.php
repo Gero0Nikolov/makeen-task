@@ -6,9 +6,9 @@ class SrcController extends MetaboxController {
 
     private $base_config;
     private $config;
-    private $render_config;
+    protected $render_config;
     private $validator_config;
-    private $params_meta_name_map;
+    protected $params_meta_name_map;
 
     function __construct(
         $boxes_base_config

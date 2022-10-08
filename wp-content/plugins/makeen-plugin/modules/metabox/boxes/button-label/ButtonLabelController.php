@@ -6,9 +6,9 @@ class ButtonLabelController extends MetaboxController {
 
     private $base_config;
     private $config;
-    private $render_config;
+    protected $render_config;
     private $validator_config;
-    private $params_meta_name_map;
+    protected $params_meta_name_map;
 
     function __construct(
         $boxes_base_config
@@ -51,14 +51,19 @@ class ButtonLabelController extends MetaboxController {
         $this->validator_config = [
             'text' => [
                 'validator' => function( $value ) {
-                    
-                    return !empty(
+
+                    return is_string(
                         sanitize_text_field( $value )
                     );
                 },
                 'filter' => function( $value ) {
 
-                    return sanitize_text_field( $value );
+                    $value = sanitize_text_field( $value );
+                    return (
+                        !empty( $value ) ?
+                        $value :
+                        $this->render_config['meta_box']['params']['text']['value']
+                    );
                 },
                 'message' => __( 'Button Label: Text cannot be empty!' ),
             ],
