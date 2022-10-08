@@ -2,7 +2,7 @@
 
 namespace MakeenTask\Metabox;
 
-class SrcController extends MetaboxController {
+class HasCcController extends MetaboxController {
 
     private $base_config;
     private $config;
@@ -27,12 +27,12 @@ class SrcController extends MetaboxController {
             'meta_box' => [
                 'name' => (
                     $this->base_config['meta_box']['prefix'] .
-                    'src'
+                    'has_cc'
                 ),
                 'params' => [
-                    'url' => [
-                        'label' => __( 'Source (Src)' ),
-                        'value' => __( '' )
+                    'checkbox' => [
+                        'label' => __( 'Has CC' ),
+                        'value' => 'off'
                     ],
                 ],
             ],
@@ -49,23 +49,21 @@ class SrcController extends MetaboxController {
 
         // Init Validator Config
         $this->validator_config = [
-            'url' => [
+            'checkbox' => [
                 'validator' => function( $value ) {
                     
                     $value = sanitize_text_field( $value );
-                    return (
-                        empty( $value ) ||
-                        filter_var(
-                            $value,
-                            FILTER_VALIDATE_URL
-                        )
+
+                    return in_array(
+                        $value,
+                        ['on', 'off']
                     );
                 },
                 'filter' => function( $value ) {
 
                     return sanitize_text_field( $value );
                 },
-                'message' => __( 'Src: URL is invalid!' ),
+                'message' => __( 'Has CC: Value should be - On or Off!' ),
             ],
         ];
 

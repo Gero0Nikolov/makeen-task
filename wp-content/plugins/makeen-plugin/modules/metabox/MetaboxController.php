@@ -51,6 +51,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                 'start-img',
                 'end-img',
                 'src',
+                'has-cc',
             ],
             'query_var' => [
                 'key' => 'mtp_error_flasher',
@@ -376,7 +377,17 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                 null
             );
 
-            if ( $data_value === null ) { continue; }
+            if ( $data_value === null ) {
+                
+                if ( $param_name === 'checkbox' ) {
+                    
+                    $data[ $param_meta_name ] = 'off';
+                    $data_value = $data[ $param_meta_name ];
+                } else {
+                    
+                    continue; 
+                }
+            }
             
             $data_validator = (
                 isset( $validator[ $param_name ] ) &&

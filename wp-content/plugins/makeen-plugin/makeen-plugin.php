@@ -196,6 +196,17 @@ class MakeenTaskPlugin {
             )
         ];
 
+        $scripts = [
+            'path' => (
+                $this->config['base']['assets']['path'] 
+                .'/script'
+            ),
+            'url' => (
+                $this->config['base']['assets']['url'] 
+                .'/script'
+            )
+        ];
+
         wp_enqueue_style(
             'mtp-admin-global-style', 
             (
@@ -205,6 +216,17 @@ class MakeenTaskPlugin {
             [], 
             $this->config['resource_version'], 
             'all'
+        );
+
+        wp_enqueue_script(
+            'mtp-admin-core-script', 
+            (
+                $scripts['url'] .
+                '/admin.js'
+            ), 
+            ['jquery'], 
+            $this->config['resource_version'],
+            true
         );
     }
 
