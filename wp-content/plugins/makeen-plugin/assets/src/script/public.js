@@ -28,6 +28,12 @@ class Public {
 
     handleShortcodeButtonClick(event) {
         event.preventDefault();
+        
+        const target = jQuery(event.target);
+
+        if (target.attr('disabled')) { return false; }
+
+        target.attr('disabled', 'disabled');
 
         jQuery.ajax({
             type: 'POST',
@@ -57,12 +63,16 @@ class Public {
             return false;
         }
 
-        jQuery(window.Public.selectors.formContainer).append(result.data.markup);
+        jQuery(window.Public.selectors.formContainer).html(result.data.markup);
+
+        jQuery(window.Public.selectors.button).removeAttr('disabled');
     }
 
     handleShortcodeError(response) {
 
         console.error(response);
+
+        jQuery(window.Public.selectors.button).removeAttr('disabled');
     }
 }
 

@@ -92,6 +92,17 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
             ],
         ];
 
+        $block_after = strtotime(
+            '+12 hours',
+            time()
+        );
+
+        self::manipulate_session(
+            'mtp_block_shortcode_after',
+            $block_after,
+            false
+        );
+
         wp_localize_script(
             'mtp-public-core-script', 
             'mtpShortcodeDataObject',
@@ -131,6 +142,23 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
                 [],
                 [
                     'Check Nonce and Form Id!',
+                ]
+            );
+        }
+
+        $time = time();
+        $block_after = self::get_session( 'mtp_block_shortcode_after' );
+
+        if (
+            empty( $block_after ) ||
+            $time >= $block_after
+        ) {
+
+            $this->return_ajax_response(
+                false,
+                [],
+                [
+                    'Session expired, reload the page and try again!',
                 ]
             );
         }
