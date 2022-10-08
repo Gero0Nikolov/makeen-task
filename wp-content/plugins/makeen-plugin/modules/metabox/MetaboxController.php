@@ -47,6 +47,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                 'frm-id',
                 'logout',
                 'trim-start',
+                'trim-end',
             ],
             'query_var' => [
                 'key' => 'mtp_error_flasher',
