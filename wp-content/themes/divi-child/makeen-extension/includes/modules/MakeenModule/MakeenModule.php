@@ -124,12 +124,12 @@ class MAEX_MakeenModule extends ET_Builder_Module {
 			);
 		}
 
-		wp_enqueue_script( 'maex-main-script', get_stylesheet_directory_uri() .'/main.js', [ 'jquery' ], MAEX_RESOURCE_VERSION, true );
+		wp_enqueue_script( 'maex-main-script', get_stylesheet_directory_uri() .'/main.js', ['jquery'], MAEX_RESOURCE_VERSION, true );
         wp_localize_script( 'maex-main-script', 'maexMainConfigObject', [
             'fields' => $fields_key_value,
         ]);
 
-		add_action( 'get_footer', [ $this, 'load_maex_main_style' ] );
+		add_action( 'get_footer', [$this, 'load_maex_main_style'] );
 
 		$formidable_forms_plugin_path = 'formidable/formidable.php';
 		$is_formidable_forms_plugin_active = is_plugin_active( $formidable_forms_plugin_path );
@@ -139,7 +139,7 @@ class MAEX_MakeenModule extends ET_Builder_Module {
 			$this->props[ 'formidable_forms' ] === '0'
 		) { return '<div class="maex_makeen_module"></div>'; }
 
-		$formidable_shortcode = '[formidable id='. $this->props[ 'formidable_forms' ] .' title=true description=true]';
+		$formidable_shortcode = '[formidable id='. $this->props['formidable_forms'] .' title=true description=true]';
 
 		return (
 			'<div class="maex_makeen_module">'.
@@ -234,7 +234,7 @@ class MAEX_MakeenModule extends ET_Builder_Module {
 
 		foreach ( $formidable_forms as $form_index => $form_object ) {
 
-			$options[ $form_object[ 'id' ] ] = $form_object[ 'name' ];
+			$options[ $form_object['id'] ] = $form_object['name'];
 		}
 
 		return $options;
