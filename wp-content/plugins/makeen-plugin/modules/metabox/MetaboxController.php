@@ -64,6 +64,9 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
 
         // Add Meta Boxes
         add_action( 'add_meta_boxes', [$this, 'mtp_add_meta_box'] );
+
+        // Set Save Post Hook
+        add_action( 'save_post', [$this, 'mtp_save_meta'] );
     }
 
     private function autoload_boxes() {
@@ -150,19 +153,99 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
         self::mtp_return_markup( $html );
     }
 
-    protected function fetch_markup( $params, $render_file ) {
+    function mtp_save_meta( $post_id ) {
+
+        $result = false;
+        
+        $post_type = (
+            !empty( $_POST['post_type'] ) ?
+            $_POST['post_type'] :
+            null
+        );
+
+        if (
+            empty( $post_type ) ||
+            $post_type !== $this->base_config['post_type']['id']
+        ) { return $result; }
+
+
+        $this->dd($_POST);
+    }
+
+    protected function fetch_markup( $post, $params_meta_name_map, $render_config ) {
 
         $html = '';
 
-        if ( !file_exists( $render_file ) ) { return $html; }
+        if ( !file_exists( $render_config['file'] ) ) { return $html; }
+
+        $params = [
+            'name' => $render_config['meta_box']['name'],
+        ];
+
+        if ( !empty( $render_config['meta_box']['params'] ) ) {
+        
+            foreach ( $render_config['meta_box']['params'] as $param_name => $param_config ) {
+
+                if ( empty( $param_name ) ) { continue; }
+
+                $param_name_meta = (
+                    !empty( $params_meta_name_map[ $param_name ] ) ?
+                    $params_meta_name_map[ $param_name ] :
+                    (
+                        $render_config['meta_box']['name'] .'_'.
+                        $param_name
+                    )
+                );
+
+                $param_meta_value = get_post_meta(
+                    $post->ID,
+                    $param_name_meta,
+                    true
+                );
+
+                $param_value = (
+                    !empty( $param_meta_value ) ?
+                    $param_meta_value : 
+                    $param_config['value']
+                );
+
+                $params[ $param_name ] = [
+                    'name' => $param_name_meta,
+                    'label' => $param_config['label'],
+                    'value' => $param_value,
+                ];
+            }
+        }
 
         extract( $params );
 
         ob_start();
-        include $render_file;
+        include $render_config['file'];
         $html = ob_get_clean();
 
         return $html;
+    }
+
+    protected function init_params_meta_name_map( $metabox_name, $params = [] ) {
+        
+        $map = [];
+
+        if ( empty( $params ) ) { return $map; }
+
+        foreach ( $params as $param_name => $param_config ) {
+
+            if ( 
+                empty( $param_name ) ||
+                !empty( $map[ $param_name ] )
+            ) { continue; }
+
+            $map[ $param_name ] = (
+                $metabox_name .'_'.
+                $param_name
+            );
+        }
+
+        return $map;
     }
 
     public static function mtp_return_markup( $html = '' ) {
