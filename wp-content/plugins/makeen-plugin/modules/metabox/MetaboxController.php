@@ -49,6 +49,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                 'trim-start',
                 'trim-end',
                 'start-img',
+                'end-img',
             ],
             'query_var' => [
                 'key' => 'mtp_error_flasher',
