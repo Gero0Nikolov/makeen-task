@@ -48,7 +48,8 @@ class MakeenModule extends Component {
 
     if (
       formidableFormsPluginIsActive &&
-      formHtml.trim().length === 0
+      formHtml.trim().length === 0 &&
+      this.props.formidable_forms !== '0'
     ) {
 
       this.renderFormidableForm(this.props.formidable_forms).then((result) => {
