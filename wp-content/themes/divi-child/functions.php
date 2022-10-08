@@ -1,6 +1,7 @@
 <?php
 
-include_once 'makeen-extension/makeen-extension.php';
+$dirname = dirname( __FILE__ );
+require_once ($dirname .'/makeen-extension/makeen-extension.php');
 
 add_action( 'wp_enqueue_scripts', 'enqueue_parent_styles' );
 function enqueue_parent_styles() {
