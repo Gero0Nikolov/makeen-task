@@ -44,6 +44,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
             ],
             'autoload' => [
                 'button-label',
+                'frm-id',
             ],
             'query_var' => [
                 'key' => 'mtp_error_flasher',
@@ -299,6 +300,11 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                     'name' => $param_name_meta,
                     'label' => $param_config['label'],
                     'value' => $param_value,
+                    'options' => (
+                        isset( $param_config['options'] ) ?
+                        $param_config['options'] :
+                        []
+                    ),
                 ];
             }
         }
@@ -423,7 +429,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
 
             if ( !empty( $param_value['error'] ) ) {
 
-                $errors[] = [
+                $errors[ $param_meta_name ] = [
                     'meta_name' => $param_meta_name,
                     'message' => $param_value['message']
                 ];

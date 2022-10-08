@@ -1,5 +1,12 @@
 .makeen-task-metabox {
 
+    &-container {
+        
+        &:not(:last-child) {
+            margin-bottom: 12px;
+        }
+    }
+
     &-field {
         display: block;
 
@@ -9,7 +16,8 @@
             font-weight: bold;
         }
 
-        &-input {
+        &-input,
+        &-select {
             display: block;
             margin: 0 auto;
             width: 100%;

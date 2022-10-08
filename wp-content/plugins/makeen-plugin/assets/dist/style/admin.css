@@ -1,2 +1,2 @@
-.makeen-task-metabox-field{display:block}.makeen-task-metabox-field-label{display:block;margin:0 auto 4px;font-weight:bold}.makeen-task-metabox-field-input{display:block;margin:0 auto;width:100%}
+.makeen-task-metabox-container:not(:last-child){margin-bottom:12px}.makeen-task-metabox-field{display:block}.makeen-task-metabox-field-label{display:block;margin:0 auto 4px;font-weight:bold}.makeen-task-metabox-field-input,.makeen-task-metabox-field-select{display:block;margin:0 auto;width:100%}
 /*# sourceMappingURL=admin.css.map */

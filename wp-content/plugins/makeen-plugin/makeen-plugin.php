@@ -78,12 +78,7 @@ class MakeenTaskPlugin {
         $this->modules = [];
 
         // Init Modules Autoload
-        $autoload_state = $this->autoload_modules();
-
-        if ( !$autoload_state ) {
-
-            self::dd( 'Error in Modules Autoload. Not all Modules were loaded correctly!' );
-        }
+        add_action( 'init', [$this, 'mtp_autoload_modules']);
 
         // Add Admin Resources
         add_action( 'admin_enqueue_scripts', [$this, 'mtp_add_admin_resources'] );
@@ -149,6 +144,16 @@ class MakeenTaskPlugin {
         }
 
         return $state;
+    }
+
+    function mtp_autoload_modules() {
+
+        $autoload_state = $this->autoload_modules();
+
+        if ( !$autoload_state ) {
+
+            self::dd( 'Error in Modules Autoload. Not all Modules were loaded correctly!' );
+        }
     }
 
     function mtp_init_post_type() {
@@ -241,6 +246,12 @@ class MakeenTaskPlugin {
         );
     }
 
+    public static function is_formidable_forms_plugin_active() {
+
+        $formidable_forms_plugin_path = 'formidable/formidable.php';
+        return is_plugin_active( $formidable_forms_plugin_path );
+    }
+    
     public static function dd( $data, $should_die = true ) {
 
         echo '<pre>';
