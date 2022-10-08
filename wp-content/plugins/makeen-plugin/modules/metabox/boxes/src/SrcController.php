@@ -2,7 +2,7 @@
 
 namespace MakeenTask\Metabox;
 
-class EndImgController extends MetaboxController {
+class SrcController extends MetaboxController {
 
     private $base_config;
     private $config;
@@ -27,11 +27,11 @@ class EndImgController extends MetaboxController {
             'meta_box' => [
                 'name' => (
                     $this->base_config['meta_box']['prefix'] .
-                    'end_img'
+                    'src'
                 ),
                 'params' => [
                     'url' => [
-                        'label' => __( 'End Image' ),
+                        'label' => __( 'Source (Src)' ),
                         'value' => __( '' )
                     ],
                 ],

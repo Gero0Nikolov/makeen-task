@@ -52,9 +52,13 @@ class StartImgController extends MetaboxController {
             'url' => [
                 'validator' => function( $value ) {
                     
-                    return filter_var(
-                        sanitize_text_field( $value ),
-                        FILTER_VALIDATE_URL
+                    $value = sanitize_text_field( $value );
+                    return (
+                        empty( $value ) ||
+                        filter_var(
+                            $value,
+                            FILTER_VALIDATE_URL
+                        )
                     );
                 },
                 'filter' => function( $value ) {
