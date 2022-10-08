@@ -100,7 +100,7 @@ class MAEX_MakeenModule extends ET_Builder_Module {
 		return $this->prepare_fields( $fields );
 	}
 
-	public function render( $attrs, $content = null, $render_slug ) {
+	public function render( $attrs, $content = null, $render_slug = '' ) {
 
 		$fields_map = [
 			'starting_point',

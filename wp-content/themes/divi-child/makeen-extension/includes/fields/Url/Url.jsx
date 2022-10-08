@@ -15,6 +15,11 @@ class Url extends Component {
    * @param {object} event
    */
   _onChange = (event) => {
+    const value = event.target.value;
+    this.props._onChange(this.props.name, value);
+  }
+
+  _onBlur = (event) => {
     const validators = {
       isValidUrl: {
         validator: (value) => {
@@ -31,7 +36,7 @@ class Url extends Component {
 
           return url.protocol === "http:" || url.protocol === "https:";
         },
-        default: event.target.value,
+        default: '',
       },
     };
 
@@ -49,6 +54,7 @@ class Url extends Component {
         type='url'
         className='maex-url et-fb-settings-option-input et-fb-settings-option-input--block'
         onChange={this._onChange}
+        onBlur={this._onBlur}
       />
     );
   }
