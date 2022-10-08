@@ -16,10 +16,12 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
 
         // Init Config
         $this->config = [
+            'nonce' => 'mtp-security-nonce',
             'shortcode' => [
                 'name' => $this->base_config['base']['shortcode'],
-                'params' => [
-                    'id',
+                'render' => [
+                    'path' => dirname( __FILE__ ),
+                    'file' => 'Render.php',
                 ],
                 'metaboxes' => [
                     'button_label',
@@ -39,6 +41,18 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
 
                     return intval( $value );
                 },
+                'logout' => function( $value ) {
+
+                    return intval( $value );
+                },
+                'trim_start' => function( $value ) {
+
+                    return intval( $value );
+                },
+                'trim_end' => function( $value ) {
+
+                    return intval( $value );
+                },
                 'has_cc' => function( $value ) {
 
                     return $value === 'on';
@@ -52,6 +66,10 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
 
         // Add Shortcode
         add_shortcode( $this->config['shortcode']['name'], [$this, 'mtp_generate_shortcode'] );
+
+        // Add Ajax Loader
+        add_action( 'wp_ajax_mtp_get_formidable_form', [$this, 'mtp_get_formidable_form'] );
+        add_action( 'wp_ajax_nopriv_mtp_get_formidable_form', [$this, 'mtp_get_formidable_form'] );
     }
 
     function mtp_generate_shortcode( $atts, $content = null ) {
@@ -62,7 +80,101 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
             $metabox_module_controller->fetch_meta_data_by_keys( $atts['id'], $this->config['shortcode']['metaboxes'] )
         );
 
-        $this->dd($meta_data);
+        $mtp_shortcode_data_object = [
+            'metaData' => $meta_data,
+            'formidableFormsData' => [
+                'active' => self::is_formidable_forms_plugin_active(),
+            ],
+            'securityData' => [
+                'action' => 'mtp_get_formidable_form',
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce' => wp_create_nonce( $this->config['nonce'] ),
+            ],
+        ];
+
+        wp_localize_script(
+            'mtp-public-core-script', 
+            'mtpShortcodeDataObject',
+            $mtp_shortcode_data_object
+        );
+
+        return $this->render_shortcode_html( $mtp_shortcode_data_object );
+    }
+
+    function mtp_get_formidable_form() {
+
+        $nonce = (
+            !empty( $_POST['nonce'] ) ?
+            sanitize_text_field( $_POST['nonce'] ) :
+            null
+        );
+
+        $form_id = (
+            !empty( $_POST['formId'] ) ?
+            intval( $_POST['formId'] ) :
+            null
+        );
+
+        $result = [
+            'success' => false,
+            'data' => [],
+            'messages' => [],
+        ];
+
+        if (
+            empty( $nonce ) ||
+            empty( $form_id )
+        ) {
+
+            $this->return_ajax_response(
+                false,
+                [],
+                [
+                    'Check Nonce and Form Id!',
+                ]
+            );
+        }
+
+        if ( !check_ajax_referer( $this->config['nonce'], 'nonce', false ) ) {
+
+            $this->return_ajax_response(
+                false,
+                [],
+                [
+                    'Nonce is invalid!',
+                ]
+            );
+        }
+
+        $formidable_shortcode = '[formidable id='. $form_id .' title=true description=true]';
+        $html = do_shortcode( $formidable_shortcode );
+        $this->return_ajax_response(
+            true,
+            [
+                'markup' => $html,
+            ],
+            []
+        );
+    }
+
+    protected function render_shortcode_html( $data ) {
+
+        $html = '';
+
+        $render_path = (
+            $this->config['shortcode']['render']['path'] .'/'.
+            $this->config['shortcode']['render']['file']
+        );
+
+        if ( !file_exists( $render_path ) ) { return $html; }
+
+        extract( $data );
+
+        ob_start();
+        include $render_path;
+        $html = ob_get_clean();
+
+        return $html;
     }
 
     private function convert_meta_data( $meta_data ) {

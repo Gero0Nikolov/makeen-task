@@ -280,6 +280,18 @@ class MakeenTaskPlugin {
         );
     }
 
+    public function return_ajax_response( $success, $data, $messages ) {
+
+        $result = [
+            'success' => $success,
+            'data' => $data,
+            'messages' => $messages,
+        ];
+    
+        echo json_encode( $result );
+        die( '' );
+    }
+
     public static function start_session() {
         
         if ( !session_id() ) {
