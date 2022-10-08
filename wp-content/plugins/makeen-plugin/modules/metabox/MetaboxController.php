@@ -52,6 +52,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                 'end-img',
                 'src',
                 'has-cc',
+                'is-live',
             ],
             'query_var' => [
                 'key' => 'mtp_error_flasher',
@@ -384,7 +385,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                     $data[ $param_meta_name ] = 'off';
                     $data_value = $data[ $param_meta_name ];
                 } else {
-                    
+
                     continue; 
                 }
             }
