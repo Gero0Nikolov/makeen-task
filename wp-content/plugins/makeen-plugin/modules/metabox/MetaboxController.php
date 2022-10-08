@@ -45,6 +45,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
             'autoload' => [
                 'button-label',
                 'frm-id',
+                'logout',
             ],
             'query_var' => [
                 'key' => 'mtp_error_flasher',
@@ -189,12 +190,20 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
             if (
                 empty( $box_dir ) ||
                 empty( $box_controller) ||
-                !method_exists( $box_controller, 'validate' ) ||
-                !method_exists( $box_controller, 'save' )
+                !method_exists( $box_controller, 'validate' )
             ) { continue; }
 
             $data = $box_controller->validate( $data );
-            
+        }
+
+        foreach ( $this->boxes as $box_dir => $box_controller ) {
+
+            if (
+                empty( $box_dir ) ||
+                empty( $box_controller) ||
+                !method_exists( $box_controller, 'save' )
+            ) { continue; }
+
             $errors = array_merge(
                 $box_controller->save( $data ),
                 $errors
@@ -305,6 +314,11 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                         $param_config['options'] :
                         []
                     ),
+                    'additional' => (
+                        isset( $param_config['additional'] ) ?
+                        $param_config['additional'] :
+                        []
+                    ),
                 ];
             }
         }
@@ -405,7 +419,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                 $filtered_data[ $param_meta_name ] = $data_value;
             }
         }
-    
+        
         return $filtered_data;
     }
 
