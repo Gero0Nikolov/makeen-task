@@ -273,7 +273,7 @@ class MakeenTaskPlugin {
         $formidable_forms_plugin_path = 'formidable/formidable.php';
         return is_plugin_active( $formidable_forms_plugin_path );
     }
-    
+
     public static function dd( $data, $should_die = true ) {
 
         echo '<pre>';
