@@ -455,11 +455,19 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
             null
         );
 
-        if ( empty( $post_id ) ) { return $errors; }
+        if ( 
+            empty( $post_id ) ||
+            empty( $this->params_meta_name_map )
+        ) { return $errors; }
+
+        $meta_names_container = array_values( $this->params_meta_name_map );
 
         foreach ( $data as $param_meta_name => $param_value ) {
 
-            if ( empty( $param_meta_name ) ) { continue; }
+            if ( 
+                empty( $param_meta_name ) ||
+                !in_array( $param_meta_name, $meta_names_container )
+            ) { continue; }
 
             if ( !empty( $param_value['error'] ) ) {
 
