@@ -14,7 +14,7 @@ class MAEX_MakeenModule extends ET_Builder_Module {
 	);
 
 	public function init() {
-		$this->name = esc_html__( 'Makeen Module', 'maex-makeen-extension' );
+		$this->name = esc_html__( 'Formidable', 'maex-makeen-extension' );
 	}
 
 	public function get_fields() {

@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name: Makeen Task: Plugin
-Description: Makeen Plugin, Task No. 2;
+Plugin Name: WM Shortcodes
+Description: Makeen Task No. 2;
 Version: 1.0
 Author: Gero Nikolov
 Author URI: https://geronikolov.com
