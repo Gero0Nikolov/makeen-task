@@ -22,7 +22,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
         $this->config = [
             'meta_box' => [
                 'id' => 'makeen_task_metabox_parent',
-                'title' => __( 'Makeen Task WM Shortcode: Meta Box Container' ),
+                'title' => __( 'WM Shortcode Settings' ),
             ],
             'base' => [
                 'path' => (

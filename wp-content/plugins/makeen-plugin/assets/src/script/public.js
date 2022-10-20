@@ -53,7 +53,9 @@ class Public {
     handleShortcodeSuccess(response) {
 
         const result = JSON.parse(response);
-        
+    
+        jQuery(window.Public.selectors.button).remove();
+
         if (!result.success) {
 
             result.messages.forEach((message, index) => {
@@ -63,7 +65,6 @@ class Public {
             return false;
         }
 
-        jQuery(window.Public.selectors.button).remove();
         jQuery(window.Public.selectors.formContainer).html(result.data.markup);
     }
 
