@@ -139,7 +139,6 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
             );
         }
 
-        $time = time();
         $block_until = self::get_cookie( $this->config['query_var']['key'] );
 
         if ( !empty( $block_until ) ) {
@@ -155,7 +154,7 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
 
             $block_until = strtotime(
                 '+'. $this->config['query_var']['hours'] .' hours',
-                $time
+                time()
             );
 
             $cookie_set_state = self::manipulate_cookie(
