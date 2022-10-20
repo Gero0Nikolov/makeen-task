@@ -16,7 +16,7 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
 
         // Init Config
         $this->config = [
-            'nonce' => 'mtp-security-nonce',
+            'nonce' => 'mtp-security-nonce-[SHORTCODE_ID]-[FORM_ID]',
             'shortcode' => [
                 'name' => $this->base_config['base']['shortcode'],
                 'render' => [
@@ -37,7 +37,7 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
                 ],
             ],
             'query_var' => [
-                'key' => 'mtp_block_shortcode_until',
+                'key' => 'mtp_block_shortcode_until_[SHORTCODE_ID]_[FORM_ID]',
                 'hours' => 12,
             ],
             'convert' => [
@@ -84,7 +84,18 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
             $metabox_module_controller->fetch_meta_data_by_keys( $atts['id'], $this->config['shortcode']['metaboxes'] )
         );
 
+        $nonce_key = $metabox_module_controller->prepare_template_tags(
+            $this->config['nonce'],
+            [
+                'shortcode_id' => $atts['id'],
+                'form_id' => $meta_data['frm_id'],
+            ]
+        );
+
         $mtp_shortcode_data_object = [
+            'shortcode' => [
+                'id' => $atts['id'],
+            ],
             'metaData' => $meta_data,
             'formidableFormsData' => [
                 'active' => self::is_formidable_forms_plugin_active(),
@@ -92,14 +103,22 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
             'securityData' => [
                 'action' => 'mtp_get_formidable_form',
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-                'nonce' => wp_create_nonce( $this->config['nonce'] ),
+                'nonce' => wp_create_nonce( $nonce_key ),
             ],
         ];
+
+        $mtp_shortcode_data_object_global = [
+            'shortcodes' => (object)[],
+            'formidableFormsData' => $mtp_shortcode_data_object['formidableFormsData'],
+            'securityData' => $mtp_shortcode_data_object['securityData'],
+        ];
+
+        unset( $mtp_shortcode_data_object_global['securityData']['nonce'] );
 
         wp_localize_script(
             'mtp-public-core-script', 
             'mtpShortcodeDataObject',
-            $mtp_shortcode_data_object
+            $mtp_shortcode_data_object_global
         );
 
         return $this->render_shortcode_html( $mtp_shortcode_data_object );
@@ -119,6 +138,12 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
             null
         );
 
+        $shortcode_id = (
+            !empty( $_POST['shortcodeId'] ) ?
+            intval( $_POST['shortcodeId'] ) :
+            null
+        );
+
         $result = [
             'success' => false,
             'data' => [],
@@ -127,25 +152,62 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
 
         if (
             empty( $nonce ) ||
-            empty( $form_id )
+            empty( $form_id ) ||
+            empty( $shortcode_id )
         ) {
 
             $this->return_ajax_response(
                 false,
-                [],
                 [
-                    'Check Nonce and Form Id!',
+                    'form_id' => $form_id,
+                    'shortcode_id' => $shortcode_id,
+                ],
+                [
+                    'Check Nonce, Form Id and Shortcode Id!',
                 ]
             );
         }
 
-        $block_until = self::get_cookie( $this->config['query_var']['key'] );
+        $metabox_module_controller = $this->get_module( 'metabox', 'metabox' );
+        $nonce_key = $metabox_module_controller->prepare_template_tags(
+            $this->config['nonce'],
+            [
+                'shortcode_id' => $shortcode_id,
+                'form_id' => $form_id,
+            ]
+        );
 
+        if ( !check_ajax_referer( $nonce_key, 'nonce', false ) ) {
+
+            $this->return_ajax_response(
+                false,
+                [
+                    'form_id' => $form_id,
+                    'shortcode_id' => $shortcode_id,
+                ],
+                [
+                    'Nonce is invalid!',
+                ]
+            );
+        }
+
+        $query_var_key = $metabox_module_controller->prepare_template_tags(
+            $this->config['query_var']['key'],
+            [
+                'shortcode_id' => $shortcode_id,
+                'form_id' => $form_id,
+            ]
+        );
+
+        $block_until = self::get_cookie( $query_var_key );
         if ( !empty( $block_until ) ) {
 
             $this->return_ajax_response(
                 false,
-                [],
+                [
+                    'form_id' => $form_id,
+                    'shortcode_id' => $shortcode_id,
+                ],
                 [
                     'Form was already loaded, please wait until '. date( 'Y-m-d H:i:s', $block_until ) .' before trying again!',
                 ]
@@ -158,21 +220,10 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
             );
 
             $cookie_set_state = self::manipulate_cookie(
-                $this->config['query_var']['key'],
+                $query_var_key,
                 $block_until,
                 false,
                 $block_until
-            );
-        }
-
-        if ( !check_ajax_referer( $this->config['nonce'], 'nonce', false ) ) {
-
-            $this->return_ajax_response(
-                false,
-                [],
-                [
-                    'Nonce is invalid!',
-                ]
             );
         }
 
@@ -182,6 +233,8 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
             true,
             [
                 'markup' => $html,
+                'form_id' => $form_id,
+                'shortcode_id' => $shortcode_id,
             ],
             []
         );
