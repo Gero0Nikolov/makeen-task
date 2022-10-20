@@ -97,11 +97,11 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
             time()
         );
 
-        self::manipulate_session(
-            'mtp_block_shortcode_after',
-            $block_after,
-            false
-        );
+        // self::manipulate_session(
+        //     'mtp_block_shortcode_after',
+        //     $block_after,
+        //     false
+        // );
 
         wp_localize_script(
             'mtp-public-core-script', 
@@ -147,7 +147,7 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
         }
 
         $time = time();
-        $block_after = self::get_session( 'mtp_block_shortcode_after' );
+        $block_after = $time + 1;//self::get_session( 'mtp_block_shortcode_after' );
 
         if (
             empty( $block_after ) ||

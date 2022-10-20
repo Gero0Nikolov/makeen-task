@@ -19,7 +19,7 @@ class ShortcodeController extends MetaboxController {
 
         // Init Config
         $this->config = [
-            'shortcode' => '['. $this->base_config['shortcode'] .' id="[POST_ID]"]',
+            'shortcode' => $this->base_config['shortcode_template'],
             'base' => [
                 'path' => dirname( __FILE__ ),
                 'url' => plugin_dir_url( __FILE__ ),
@@ -67,14 +67,11 @@ class ShortcodeController extends MetaboxController {
             !empty( $post->ID ) 
         ) {
 
-            $this->render_config['meta_box']['params']['shortcode']['value'] = str_replace(
+            $this->render_config['meta_box']['params']['shortcode']['value'] = $this->prepare_template_tags(
+                $this->config['shortcode'],
                 [
-                    '[POST_ID]',
-                ],
-                [
-                    $post->ID,
-                ],
-                $this->config['shortcode']
+                    'post_id' => $post->ID
+                ]
             );
         }
 

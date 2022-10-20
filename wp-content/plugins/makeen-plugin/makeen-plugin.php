@@ -16,6 +16,7 @@ class MakeenTaskPlugin {
     private $modules_count;
     private $modules_base_config;
     private $modules;
+    private $custom_columns;
 
     public static $styles_config;
     public static $scripts_config;
@@ -81,6 +82,57 @@ class MakeenTaskPlugin {
         // Init Default Modules Container
         $this->modules = [];
 
+        // Init Custom Columns
+        $this->custom_columns = [
+            'mtp_wm_shortcode_column' => [
+                'position' => 2,
+                'label' => __( 'WM Shortcode' ),
+                'render' => function( $post_id ) {
+
+                    $data = '';
+                    $main_plugin_instance = self::get_main_instance();
+                    
+                    if ( empty( $main_plugin_instance ) ) { return $data; }
+
+                    $metabox_module_controller = $main_plugin_instance->get_module(
+                        'metabox',
+                        'metabox'
+                    );
+
+                    $shortcode_template = $metabox_module_controller->prepare_template_tags(
+                        $metabox_module_controller->get_shortcode_template(),
+                        [
+                            'post_id' => $post_id
+                        ]
+                    );
+
+                    $shortcode_length = strlen( $shortcode_template );
+                    $shortcode_box_width = ( $shortcode_length * 8.6 );
+
+                    $data = '
+                    <input
+                        type="text"
+                        readonly="readonly"
+                        id="mtp-wm-shortcode-column-'. $post_id .'"
+                        name="mtp_wm_shortcode_column_'. $post_id .'"
+                        value="'. htmlentities( $shortcode_template ) .'"
+                        style="
+                            display: block;
+                            width: auto;
+                            max-width: 100%;
+                            min-width: '. $shortcode_box_width .'px;
+                            text-align: center;
+                            font-weight: bold;
+                            margin: 0;
+                        "
+                    />
+                    ';
+
+                    return $data;
+                },
+            ],
+        ];
+
         // Init Styles Config
         self::$styles_config = [
             'path' => (
@@ -106,7 +158,7 @@ class MakeenTaskPlugin {
         ];
 
         // Init Modules Autoload
-        add_action( 'init', [$this, 'mtp_autoload_modules']);
+        add_action( 'init', [$this, 'mtp_autoload_modules'], 3 );
 
         // Add Public Resources
         add_action( 'wp_enqueue_scripts', [$this, 'mtp_add_public_resources'] );
@@ -114,11 +166,14 @@ class MakeenTaskPlugin {
         // Add Admin Resources
         add_action( 'admin_enqueue_scripts', [$this, 'mtp_add_admin_resources'] );
 
-        // Init Session
-        add_action( 'init', [$this, 'mtp_start_session'] );
-
         // Init Post Type
-        add_action( 'init', [$this, 'mtp_init_post_type'] );
+        add_action( 'init', [$this, 'mtp_init_post_type'], 2 );
+
+        // Init the Post Type Custom Columns
+        add_filter( 'manage_'. $this->config['post_type']['id'] .'_posts_columns', [$this, 'mtp_manage_columns'] );
+
+        // Populate the Post Type Custom Columns Data
+        add_action( 'manage_posts_custom_column', [$this, 'mtp_populate_columns'], 10, 2 );
     }
 
     private function autoload_modules() {
@@ -175,6 +230,85 @@ class MakeenTaskPlugin {
         }
 
         return $state;
+    }
+
+    private function prepare_columns_list( $columns ) {
+
+        if ( empty( $this->custom_columns ) ) { return $columns; }
+
+        $columns_index_keys_map = array_keys( $columns );
+        foreach ( $this->custom_columns as $column_key => $column_config ) {
+
+            if ( empty( $column_config ) ) { continue; }
+
+            if ( !isset( $column_config['position'] ) ) {
+
+                $columns_index_keys_map[] = $column_key;
+                continue;
+            }
+            
+            $columns_index_keys_map = $this->prepare_column_index_keys_map(
+                $columns_index_keys_map,
+                $column_key,
+                $column_config['position']    
+            );
+        }    
+
+        $columns_list_prepared = [];
+        foreach ( $columns_index_keys_map as $index => $key ) {
+
+            if ( isset( $columns[ $key ] ) ) {
+
+                $columns_list_prepared[ $key ] = $columns[ $key ];
+            } elseif ( isset( $this->custom_columns[ $key ] ) ) {
+
+                $columns_list_prepared[ $key ] = (
+                    !empty( $this->custom_columns[ $key ]['label'] ) ?
+                    $this->custom_columns[ $key ]['label'] :
+                    ''
+                );
+            }
+        }
+
+        return $columns_list_prepared;
+    }
+
+    private function prepare_column_index_keys_map( $map, $column_key, $column_position ) {
+
+        if (
+            empty( $map ) ||
+            empty( $column_key ) ||
+            (
+                empty( $column_position ) &&
+                $column_position !== 0
+            )
+        ) { return $map; }
+
+        if ( !isset( $map[ $column_position ] ) ) {
+
+            $map[ $column_position ] = $column_key;
+            return $map;
+        }
+
+        foreach ( $map as $index => $key ) {
+
+            if ( $index !== $column_position ) { continue; }
+
+            $current_column = [
+                'new_position' => ($index + 1),
+                'key' => $key,
+            ];
+
+            $map[ $index ] = $column_key;
+
+            $map = $this->prepare_column_index_keys_map(
+                $map,
+                $current_column['key'],
+                $current_column['new_position']
+            );
+        }
+
+        return $map;
     }
 
     function mtp_autoload_modules() {
@@ -270,9 +404,23 @@ class MakeenTaskPlugin {
         );
     }
 
-    function mtp_start_session() {
+    function mtp_manage_columns( $columns ) {
 
-        self::start_session();
+        return $this->prepare_columns_list( $columns );
+    }
+
+    function mtp_populate_columns( $column, $post_id ) {        
+
+        if (
+            !empty( $column ) &&
+            !empty( $post_id ) &&
+            !empty( $this->custom_columns ) &&
+            !empty( $this->custom_columns[ $column ] ) &&
+            isset( $this->custom_columns[ $column ]['render'] )
+        ) { 
+
+            echo $this->custom_columns[ $column ]['render']( $post_id );
+        }
     }
 
     public function get_module( $namespace, $module ) {
@@ -340,14 +488,31 @@ class MakeenTaskPlugin {
         return is_plugin_active( $formidable_forms_plugin_path );
     }
 
-    public static function dd( $data, $should_die = true ) {
+    public static function get_main_instance() {
 
-        echo '<pre>';
-        var_dump( $data );
-        echo '</pre>';
+        global $MakeenTaskPlugin;
+
+        return (
+            !empty( $MakeenTaskPlugin ) ?
+            $MakeenTaskPlugin :
+            null
+        );
+    }
+
+    public static function dd( $data, $should_die = true, $should_return = false ) {
+
+        if ( !$should_return ) {
+            echo '<pre>';
+            var_dump( $data );
+            echo '</pre>';
+        }
 
         if ( $should_die ) {
             die( '' );
+        }
+
+        if ( $should_return ) {
+            return $data;
         }
     }
 }

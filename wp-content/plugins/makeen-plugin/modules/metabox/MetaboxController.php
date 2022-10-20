@@ -42,6 +42,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
                     'render' => 'Render.php',
                 ],
                 'shortcode' => $this->base_config['base']['shortcode'],
+                'shortcode_template' => '['. $this->base_config['base']['shortcode'] .' id="[POST_ID]"]',
             ],
             'autoload' => [
                 'shortcode',
@@ -488,6 +489,31 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
         return $errors;
     }
 
+    public function prepare_template_tags( $template, $tags ) {
+
+        if (
+            empty( $template ) ||
+            empty( $tags )
+        ) { return $template; }
+
+        foreach ( $tags as $tag_key => $tag_value ) {
+
+            $tag = strtoupper(
+                '['.
+                $tag_key .
+                ']'
+            );
+
+            $template = str_replace(
+                $tag,
+                $tag_value,
+                $template
+            );
+        }
+
+        return $template;
+    }
+
     public function fetch_meta_data_by_keys( $post_id, $keys ) {
 
         $data = [];
@@ -557,5 +583,10 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
     public static function mtp_return_markup( $html = '' ) {
 
         echo $html;
+    }
+
+    public function get_shortcode_template() {
+
+        return $this->config['base']['shortcode_template'];
     }
 }
