@@ -3,6 +3,12 @@
 $message = 'Load your Formidable Form!';
 $showButton = true;
 
+$jsDataObject = [
+    'shortcode' => $shortcode,
+    'metaData' => $metaData,
+    'securityData' => $securityData,
+];
+
 if (
     !empty( $formidableFormsData['active'] ) &&
     empty( $metaData['frm_id'] )
@@ -21,6 +27,8 @@ if ( empty( $formidableFormsData['active'] ) ) {
 
 <div 
     class="makeen-task-shortcode-container"
+    data-form-id="<?php echo $metaData['frm_id']; ?>"
+    data-shortcode-id="<?php echo $shortcode['id']; ?>"
 >
 
     <h2
@@ -37,7 +45,8 @@ if ( empty( $formidableFormsData['active'] ) ) {
         <button
             type="button"
             class="makeen-task-shortcode-button"
-            data-id="<?php echo $metaData['frm_id']; ?>"
+            data-form-id="<?php echo $metaData['frm_id']; ?>"
+            data-shortcode-id="<?php echo $shortcode['id']; ?>"
         >
 
             <?php echo $metaData['button_label']; ?>
@@ -49,5 +58,24 @@ if ( empty( $formidableFormsData['active'] ) ) {
 
     <div
         class="makeen-task-shortcode-form-container"
+        data-form-id="<?php echo $metaData['frm_id']; ?>"
+        data-shortcode-id="<?php echo $shortcode['id']; ?>"
     ></div>
 </div>
+
+<script 
+    type="text/javascript" 
+    data-form-id="<?php echo $metaData['frm_id']; ?>"
+    data-shortcode-id="<?php echo $shortcode['id']; ?>"
+>
+
+window.addEventListener('load', (event) => {
+
+    window.mtpShortcodeId = '<?php echo $shortcode['id'] ?>';
+
+    if (typeof window.mtpShortcodeDataObject.shortcodes[window.mtpShortcodeId] === 'undefined') {
+        
+        window.mtpShortcodeDataObject.shortcodes[window.mtpShortcodeId] = <?php echo json_encode( $jsDataObject ); ?>;
+    }
+});
+</script>
