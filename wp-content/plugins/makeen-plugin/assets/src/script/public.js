@@ -53,7 +53,7 @@ class Public {
     handleShortcodeSuccess(response) {
 
         const result = JSON.parse(response);
-
+        
         if (!result.success) {
 
             result.messages.forEach((message, index) => {
@@ -63,9 +63,8 @@ class Public {
             return false;
         }
 
+        jQuery(window.Public.selectors.button).remove();
         jQuery(window.Public.selectors.formContainer).html(result.data.markup);
-
-        jQuery(window.Public.selectors.button).removeAttr('disabled');
     }
 
     handleShortcodeError(response) {

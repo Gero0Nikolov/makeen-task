@@ -90,6 +90,9 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
 
         // Admin Notices
         add_action( 'admin_notices', [$this, 'mtp_flash_notices'] );
+
+        // Set Flasher Reset
+        add_action( 'init', [$this, 'mtp_reset_flasher'] );
     }
 
     private function autoload_boxes() {
@@ -154,6 +157,20 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
 			[$this, 'mtp_render_meta_boxes'],
 			$this->base_config['post_type']['id']
 		);
+    }
+
+    function mtp_reset_flasher() {
+
+        $errors = self::get_cookie( $this->config['query_var']['key'] );
+
+        if ( !empty( $errors ) ) {
+
+            $cookie_set_state = self::manipulate_cookie(
+                $this->config['query_var']['key'],
+                [],
+                true
+            );
+        }
     }
 
     function mtp_render_meta_boxes( $post ) {
@@ -231,15 +248,9 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
 
     function mtp_flash_notices() {
 
-        $errors = self::get_session( $this->config['query_var']['key'] );
-        
-        if ( !empty( $errors ) ) {
+        $errors = self::get_cookie( $this->config['query_var']['key'] );
 
-            $session_set_state = self::manipulate_session(
-                $this->config['query_var']['key'],
-                [],
-                true
-            );
+        if ( !empty( $errors ) ) {
 
             $single_error_html = '
             <div class="error">
@@ -273,7 +284,7 @@ class MetaboxController extends \MakeenTask\MakeenTaskPlugin {
 
     protected function set_admin_errors_flash( $errors ) {
 
-        $session_set_state = self::manipulate_session(
+        $cookie_set_state = self::manipulate_cookie(
             $this->config['query_var']['key'],
             $errors
         );

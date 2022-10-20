@@ -36,6 +36,10 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
                     'is_live',
                 ],
             ],
+            'query_var' => [
+                'key' => 'mtp_block_shortcode_until',
+                'hours' => 12,
+            ],
             'convert' => [
                 'frm_id' => function( $value ) {
 
@@ -92,17 +96,6 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
             ],
         ];
 
-        $block_after = strtotime(
-            '+12 hours',
-            time()
-        );
-
-        // self::manipulate_session(
-        //     'mtp_block_shortcode_after',
-        //     $block_after,
-        //     false
-        // );
-
         wp_localize_script(
             'mtp-public-core-script', 
             'mtpShortcodeDataObject',
@@ -147,19 +140,29 @@ class ShortcodeController extends \MakeenTask\MakeenTaskPlugin {
         }
 
         $time = time();
-        $block_after = $time + 1;//self::get_session( 'mtp_block_shortcode_after' );
+        $block_until = self::get_cookie( $this->config['query_var']['key'] );
 
-        if (
-            empty( $block_after ) ||
-            $time >= $block_after
-        ) {
+        if ( !empty( $block_until ) ) {
 
             $this->return_ajax_response(
                 false,
                 [],
                 [
-                    'Session expired, reload the page and try again!',
+                    'Form was already loaded, please wait until '. date( 'Y-m-d H:i:s', $block_until ) .' before trying again!',
                 ]
+            );
+        } else {
+
+            $block_until = strtotime(
+                '+'. $this->config['query_var']['hours'] .' hours',
+                $time
+            );
+
+            $cookie_set_state = self::manipulate_cookie(
+                $this->config['query_var']['key'],
+                $block_until,
+                false,
+                $block_until
             );
         }
 

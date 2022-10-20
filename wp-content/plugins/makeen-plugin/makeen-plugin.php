@@ -457,28 +457,78 @@ class MakeenTaskPlugin {
         }
     }
 
-    public static function manipulate_session( $key, $value, $delete = false ) {
+    public static function manipulate_cookie( $key, $value, $delete = false, $expires = 0 ) {
         
+        $value = (
+            !empty( $value ) ?
+            json_encode( $value, JSON_HEX_QUOT ) :
+            ''
+        );
+
+        $cookie_state = false;
+
         if ( $delete ) {
 
-            if ( isset( $_SESSION[ $key ] ) ) {
+            if ( isset( $_COOKIE[ $key ] ) ) {
              
-                unset( $_SESSION[ $key ] );
+                $cookie_state = setcookie(
+                    $key,
+                    $value,
+                    (
+                        time() - 3600
+                    )
+                );
             }
             
-            return true;
+            return $cookie_state;
         }
 
-        $_SESSION[ $key ] = $value;
-        return true;
+        $expires = (
+            !empty( $expires ) ?
+            $expires :
+            strtotime(
+                '+1 hour',
+                time()
+            )
+        );
+
+        $cookie_state = setcookie(
+            $key,
+            $value,
+            $expires,
+        );
+
+        return $cookie_state;
     }
 
-    public static function get_session( $key ) {
+    public static function get_cookie( $key ) {
+
+        $result = (
+            isset( $_COOKIE[ $key ] ) ?
+            $_COOKIE[ $key ] :
+            null
+        );
+
+        if ( !empty( $result ) ) {
+
+            $result = json_decode(
+                str_replace(
+                    [
+                        '\"',
+                    ],
+                    [
+                        '"'
+                    ],
+                    $result
+                ),
+                true
+            );
+        }
 
         return (
-            isset( $_SESSION[ $key ] ) ?
-            $_SESSION[ $key ] :
-            null
+            !empty( $result ) ?
+            $result :
+            ''
         );
     }
 
